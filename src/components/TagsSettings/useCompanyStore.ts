@@ -32,8 +32,10 @@ interface CompanyStore {
 const api = axios.create({
   baseURL: BackEndUrl,
   headers: {
-    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    "Content-Type": "application/json"
   },
+  withCredentials: true,
 });
 const useCompanyStore = create<CompanyStore>()(
   persist(
