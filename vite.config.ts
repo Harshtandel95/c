@@ -11,12 +11,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api/': {  // for content manager
-        target: BackEndUrl ,
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api\/content/, '')
-      },
+      '/api': BackEndUrl ,
     }
   }
 })
