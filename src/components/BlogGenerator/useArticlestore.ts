@@ -26,7 +26,7 @@ const useArticleStore = create<ArticleStore>((set) => ({
     set({ loading: true, error: null });
     try {
       const data = { id:id,Handle:handle };
-      const response = await axios.post(`${BackEndUrl}/api/articles`, data);
+      const response = await axios.post(`${BackEndUrl}api/articles`, data);
       set({ articles: response.data.articles, loading: false });
     } catch (error) {
       set({
