@@ -2,29 +2,36 @@ import { useEffect, useState, useRef } from "react";
 import { Editor } from "primereact/editor";
 import { Toast } from "primereact/toast";
 import { ClassNameManager } from "./ClassNameManager";
-import { useHTMLProcessor } from "../../hooks/useHTMLProcessor";
 import { HTMLPreview } from "./HTMLPreview";
-import useCompanyStore from "../TagsSettings/useCompanyStore";
+
+
 const BodyGenerator = () => {
   const [text, setText] = useState<string>("");
   const [processedText, setProcessedText] = useState<string>("");
   const [showCopiedAlert, setShowCopiedAlert] = useState(false);
   const classNameManager = useRef(new ClassNameManager()).current;
   const toast = useRef<Toast>(null);
-  const { companies, activeCompanyId} = useCompanyStore();
-  const activeCompany = companies.find(company => company._id === activeCompanyId);
-  const processHTML = useHTMLProcessor(classNameManager);
+
+
+  // Function to process the HTML content and add spaces around href
+  const processHTML = (text: string) => {
+    // Use a regular expression to add spaces around href values in anchor tags
+    const processedText = text.replace(/(<a[^>]+href=")([^"]+)(")/g, (match, p1, p2, p3) => {
+      // Add spaces before and after href value
+      return `${p1} ${p2} ${p3}`;
+    });
+
+
+    return { html: processedText };
+  };
+
+
   useEffect(() => {
-    if (activeCompany?.Generator.BodyGenerator && activeCompany?.Generator.BodyGenerator.length > 0) {
-      activeCompany?.Generator.BodyGenerator.forEach(gen => {
-        if (gen.tags && gen.class) {
-          classNameManager.replaceClassName(gen.tags, gen.class);
-        }
-      });
-    }
     const { html } = processHTML(text);
     setProcessedText(html);
-  }, [text, processHTML, activeCompany?.Generator.BodyGenerator]);
+  }, [text]);
+
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(processedText);
@@ -39,9 +46,8 @@ const BodyGenerator = () => {
       });
     }
   };
-  if (!activeCompany) {
-    return <div>Please select a company first</div>;
-  }
+
+
   return (
     <div className="space-y-4">
       <Editor
@@ -50,15 +56,17 @@ const BodyGenerator = () => {
         style={{ height: "320px" }}
         placeholder="Enter headings in format: 'Heading Text (H1)' or 'Heading Text (h2)'"
       />
-      
-      <HTMLPreview 
+     
+      <HTMLPreview
         processedText={processedText}
         onCopy={handleCopy}
         showCopiedAlert={showCopiedAlert}
       />
-      
+     
       <Toast ref={toast} />
     </div>
   );
 };
+
+
 export default BodyGenerator;
