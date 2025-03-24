@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Editor } from "primereact/editor";
 import { Toast } from "primereact/toast";
-import { ClassNameManager } from "./ClassNameManager";
+{/*import { ClassNameManager } from "./ClassNameManager";*/}
 import { HTMLPreview } from "./HTMLPreview";
 
 
@@ -16,7 +16,7 @@ const BodyGenerator = () => {
   // Function to process the HTML content and add spaces around href
   const processHTML = (text: string) => {
     // Use a regular expression to add spaces around href values in anchor tags
-    const processedText = text.replace(/(<a[^>]+href=")([^"]+)(")/g, (match, p1, p2, p3) => {
+    const processedText = text.replace(/(<a[^>]+href=")([^"]+)(")/g, (p1, p2, p3) => {
       // Add spaces before and after href value
       return `${p1} ${p2} ${p3}`;
     });
