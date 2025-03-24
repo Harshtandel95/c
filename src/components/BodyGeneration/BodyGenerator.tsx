@@ -9,7 +9,7 @@ const BodyGenerator = () => {
   const [text, setText] = useState<string>("");
   const [processedText, setProcessedText] = useState<string>("");
   const [showCopiedAlert, setShowCopiedAlert] = useState(false);
-  const classNameManager = useRef(new ClassNameManager()).current;
+  {/*const classNameManager = useRef(new ClassNameManager()).current;*/}
   const toast = useRef<Toast>(null);
 
 
