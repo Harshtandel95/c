@@ -1,41 +1,44 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Editor } from "primereact/editor";
 import './type.css';
 import { Copy } from "lucide-react";
 import { Toast } from "primereact/toast";
 import { Alert, AlertDescription } from "../ui/alert";
 import { ClassNameManager } from "../BodyGeneration/ClassNameManager";
-import useCompanyStore from "../TagsSettings/useCompanyStore";
+
 interface HeadingNode {
   text: string;
   level: number;
   id: string;
   children: HeadingNode[];
 }
+
 type GenerateAnchorId = (text: string) => string;
 type ParseHeadings = (text: string) => HeadingNode[];
 type GenerateHTML = (nodes: HeadingNode[], classNameManager: ClassNameManager) => string;
+
 const sanitizeText = (text: string | null | undefined): string => {
   return text?.trim() ?? '';
 };
+
 const generateAnchorId: GenerateAnchorId = (text) => {
   return sanitizeText(text)
-    .replace(/[^a-zA-Z0-9 ]/g, '')
+    .replace(/[^a-zA-Z0-9\s-]/g, '') // Allow hyphens
     .replace(/\s+/g, '-')
+    .replace(/-+/g, '-') // Remove consecutive hyphens
     .toLowerCase() || 'heading';
 };
+
 const parseHeadings: ParseHeadings = (text) => {
   if (!text) return [];
   const lines = text.split('\n');
   const root: HeadingNode[] = [];
   const levelMap: Record<number, HeadingNode | null> = { 2: null, 3: null, 4: null };
+
   lines.forEach((line, index) => {
-    const trimmedLine = line.trim();
+    const trimmedLine = line.trim().replace(/^●\s*/, ''); // Remove bullet points
     if (!trimmedLine) return;
-    const parts = trimmedLine.split(/\s+/);
-    if (parts.length < 1) return;
-    const headingText = parts.slice(0, -1).join(' ').trim();
+    const headingText = trimmedLine.replace(/\(h[1-6]\)/gi, '').trim(); // Remove (h1), (h2), etc.
     if (!headingText) return;
     const baseId = generateAnchorId(headingText);
     const id = root.some(node => node.id === baseId) 
@@ -55,6 +58,7 @@ const parseHeadings: ParseHeadings = (text) => {
   });
   return root;
 };
+
 const generateHTML: GenerateHTML = (nodes, classNameManager) => {
   if (!nodes || !Array.isArray(nodes)) return '';
   const renderList = (items: HeadingNode[]): string => {
@@ -82,34 +86,23 @@ const generateHTML: GenerateHTML = (nodes, classNameManager) => {
   <h2 class="${headerClass}"><strong>Table of Contents</strong></h2>
 ${html}</div>`);
 };
+
 const TableOfContentsGenerator: React.FC = () => {
   const [text, setText] = useState<string>('');
   const classNameManager = useRef<ClassNameManager>(new ClassNameManager());
   const toast = useRef<Toast>(null);
   const [showCopiedAlert, setShowCopiedAlert] = useState<boolean>(false);
-  const { companies, activeCompanyId, setTabgenerator } = useCompanyStore() ;
-  const activeCompany = companies.find(company => company._id === activeCompanyId);
-  const id = activeCompanyId ?? '';
-  useEffect(() => {
-    if (companies && id) {
-      setTabgenerator("TOCgenerator", companies, id);
-    }
-  }, [companies, id, setTabgenerator]);
+
   const tocStructure = useMemo(() => parseHeadings(text), [text]);
   const htmlOutput = useMemo(() => {
-    if (!activeCompany?.Generator?.TOCgenerator) return '';
     try {
-      activeCompany.Generator.TOCgenerator.forEach(gen => {
-        if (gen.tags && gen.class && classNameManager.current) {
-          classNameManager.current.replaceClassName(gen.tags, gen.class);
-        }
-      });
       return generateHTML(tocStructure, classNameManager.current);
     } catch (error) {
       console.error('Error generating HTML:', error);
       return '';
     }
-  }, [tocStructure, activeCompany?.Generator?.TOCgenerator]);
+  }, [tocStructure]);
+
   const handlecopy = async () => {
     try {
       if (!htmlOutput) {
@@ -128,9 +121,7 @@ const TableOfContentsGenerator: React.FC = () => {
       });
     }
   };
-  if (!activeCompany) {
-    return <div className="p-4 text-red-500">Please select a company first</div>;
-  }
+
   return (
     <div className="card">
       <Toast ref={toast} />
@@ -145,7 +136,7 @@ const TableOfContentsGenerator: React.FC = () => {
       </div>
       <pre className="html-output">
         <div className="flex cursor-pointer flex-row-reverse justify-between">
-          <Copy onClick={handlecopy} /> 
+          <Copy onClick={handlecopy} />
           <code>{htmlOutput}</code>
         </div>
       </pre>
@@ -159,4 +150,5 @@ const TableOfContentsGenerator: React.FC = () => {
     </div>
   );
 };
+
 export default TableOfContentsGenerator;
