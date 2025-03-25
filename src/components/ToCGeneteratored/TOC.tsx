@@ -38,7 +38,10 @@ const parseHeadings: ParseHeadings = (text) => {
   lines.forEach((line, index) => {
     const trimmedLine = line.trim().replace(/^●\s*/, ''); // Remove bullet points
     if (!trimmedLine) return;
-    const headingText = trimmedLine.replace(/\(h[1-6]\)/gi, '').trim(); // Remove (h1), (h2), etc.
+    const headingText = trimmedLine
+      .replace(/\(h[1-6]\)/gi, '') // Remove (h1), (h2), etc.
+      .replace(/^\d+\.\s*/, '') // Remove indexing digits like 1., 2., etc.
+      .trim();
     if (!headingText) return;
     const baseId = generateAnchorId(headingText);
     const id = root.some(node => node.id === baseId) 
