@@ -10,6 +10,16 @@ const BodyGenerator = () => {
  
   const toast = useRef<Toast>(null);
 
+  // Function to generate a heading ID
+  const generateHeadingId = (text: string): string => {
+    return text
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-zA-Z0-9\s-]/g, '') // Remove non-alphanumeric characters except hyphens
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-'); // Remove consecutive hyphens
+  };
+
   // Function to process the HTML content, add spaces around href, and remove style attributes
   const processHTML = (text: string) => {
     // Create a temporary DOM element to parse the HTML
@@ -45,6 +55,18 @@ const BodyGenerator = () => {
           parent.removeChild(u);
         }
       }
+    });
+
+    // Generate and assign IDs to headings
+    const headings = temp.querySelectorAll("h1, h2, h3, h4, h5, h6");
+    headings.forEach(heading => {
+      const originalHeadingText = heading.textContent || "";
+      const headingTextForId = originalHeadingText
+        .replace(/\(h[1-6]\)/gi, '') // Remove (h1), (h2), etc.
+        .replace(/^\d+\.\s*/, '') // Remove indexing digits like 1., 2., etc.
+        .trim();
+      const headingId = generateHeadingId(headingTextForId);
+      heading.setAttribute("id", headingId);
     });
 
     return { html: temp.innerHTML };
