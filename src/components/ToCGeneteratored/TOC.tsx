@@ -66,9 +66,9 @@ const generateHTML: GenerateHTML = (nodes, classNameManager) => {
   if (!nodes || !Array.isArray(nodes)) return '';
   const renderList = (items: HeadingNode[]): string => {
     if (!items.length) return '';
-    const ulClass = classNameManager.getClassName('ul') || 'default-ul-class';
-    const liClass = classNameManager.getClassName('li') || 'default-li-class';
-    const aClass = classNameManager.getClassName('a') || 'default-a-class';
+    const ulClass = classNameManager.getClassName('ul') || '';
+    const liClass = classNameManager.getClassName('li') || '';
+    const aClass = classNameManager.getClassName('a') || '';
     return `
     <ul class="${ulClass}">${items.map(item => 
       `<li class="${liClass}"><a class="${aClass}" href="#${item.id}">${
@@ -78,22 +78,16 @@ const generateHTML: GenerateHTML = (nodes, classNameManager) => {
         ''}</li>`
     ).join('\n')}</ul>`;
   };
-
   let html = renderList(nodes)
     .replace(/\n<\/li>/g, '</li>')
     .replace(/^\s+/gm, '')
     .trim();
   html = html.replace(/● /g, '');
-
-  // Dynamically fetch tag and class names
-  const tocTag = classNameManager.getClassName('tocTag') || 'div';
-  const tocClass = classNameManager.getClassName('div') || 'default-div-class';
-  const headerTag = classNameManager.getClassName('headerTag') || 'h2';
-  const headerClass = classNameManager.getClassName('h2') || 'default-h2-class';
-
-  return (`<${tocTag} class="${tocClass}">
-  <${headerTag} class="${headerClass}"><strong>Table of Contents</strong></${headerTag}>
-${html}</${tocTag}>`);
+  const tocClass = classNameManager.getClassName('div') || '';
+  const headerClass = classNameManager.getClassName('h2') || '';
+  return (`<div class="${tocClass}">
+  <h2 class="${headerClass}"><strong>Table of Contents</strong></h2>
+${html}</div>`);
 };
 
 const TableOfContentsGenerator: React.FC = () => {
