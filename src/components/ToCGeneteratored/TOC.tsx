@@ -78,16 +78,22 @@ const generateHTML: GenerateHTML = (nodes, classNameManager) => {
         ''}</li>`
     ).join('\n')}</ul>`;
   };
+
   let html = renderList(nodes)
     .replace(/\n<\/li>/g, '</li>')
     .replace(/^\s+/gm, '')
     .trim();
   html = html.replace(/● /g, '');
+
+  // Dynamically fetch tag and class names
+  const tocTag = classNameManager.getClassName('tocTag') || 'div';
   const tocClass = classNameManager.getClassName('div') || 'default-div-class';
+  const headerTag = classNameManager.getClassName('headerTag') || 'h2';
   const headerClass = classNameManager.getClassName('h2') || 'default-h2-class';
-  return (`<div class="${tocClass}">
-  <h2 class="${headerClass}"><strong>Table of Contents</strong></h2>
-${html}</div>`);
+
+  return (`<${tocTag} class="${tocClass}">
+  <${headerTag} class="${headerClass}"><strong>Table of Contents</strong></${headerTag}>
+${html}</${tocTag}>`);
 };
 
 const TableOfContentsGenerator: React.FC = () => {
