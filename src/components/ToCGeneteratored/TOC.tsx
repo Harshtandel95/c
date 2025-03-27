@@ -66,9 +66,9 @@ const generateHTML: GenerateHTML = (nodes, classNameManager) => {
   if (!nodes || !Array.isArray(nodes)) return '';
   const renderList = (items: HeadingNode[]): string => {
     if (!items.length) return '';
-    const ulClass = classNameManager.getClassName('ul') || '';
-    const liClass = classNameManager.getClassName('li') || '';
-    const aClass = classNameManager.getClassName('a') || '';
+    const ulClass = classNameManager.getClassName('ul') || 'default-ul-class';
+    const liClass = classNameManager.getClassName('li') || 'default-li-class';
+    const aClass = classNameManager.getClassName('a') || 'default-a-class';
     return `
     <ul class="${ulClass}">${items.map(item => 
       `<li class="${liClass}"><a class="${aClass}" href="#${item.id}">${
@@ -83,8 +83,8 @@ const generateHTML: GenerateHTML = (nodes, classNameManager) => {
     .replace(/^\s+/gm, '')
     .trim();
   html = html.replace(/● /g, '');
-  const tocClass = classNameManager.getClassName('div') || '';
-  const headerClass = classNameManager.getClassName('h2') || '';
+  const tocClass = classNameManager.getClassName('div') || 'default-div-class';
+  const headerClass = classNameManager.getClassName('h2') || 'default-h2-class';
   return (`<div class="${tocClass}">
   <h2 class="${headerClass}"><strong>Table of Contents</strong></h2>
 ${html}</div>`);
