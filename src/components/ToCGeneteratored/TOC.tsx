@@ -86,18 +86,23 @@ const generateHTML: GenerateHTML = (nodes, classNameManager) => {
   html = html.replace(/● /g, '');
 
   // Dynamically fetch tag and class names
-  const tocTag = classNameManager.getClassName('tocTag') || 'div';
-  const tocClass = classNameManager.getClassName('div') || 'default-div-class';
-  const headerTag = classNameManager.getClassName('headerTag') || 'h2';
-  const headerClass = classNameManager.getClassName('h2') || 'default-h2-class';
+  const tocTag = classNameManager.getClassName('tocTag')?.trim() || 'div';
+  const tocClass = classNameManager.getClassName('div')?.trim() || 'default-div-class';
+  const headerTag = classNameManager.getClassName('headerTag')?.trim() || 'h2';
+  const headerClass = classNameManager.getClassName('h2')?.trim() || 'default-h2-class';
 
   // Debugging: Log the fetched tag and class names
   console.log('Custom Tag:', tocTag);
   console.log('Custom Class:', tocClass);
 
-  return (`<${tocTag} class="${tocClass}">
-  <${headerTag} class="${headerClass}"><strong>Table of Contents</strong></${headerTag}>
-${html}</${tocTag}>`);
+  // Ensure valid HTML tags are used
+  const validTags = ['div', 'section', 'article', 'header', 'footer', 'nav', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+  const safeTocTag = validTags.includes(tocTag) ? tocTag : 'div';
+  const safeHeaderTag = validTags.includes(headerTag) ? headerTag : 'h2';
+
+  return (`<${safeTocTag} class="${tocClass}">
+  <${safeHeaderTag} class="${headerClass}"><strong>Table of Contents</strong></${safeHeaderTag}>
+${html}</${safeTocTag}>`);
 };
 
 const TableOfContentsGenerator: React.FC = () => {
