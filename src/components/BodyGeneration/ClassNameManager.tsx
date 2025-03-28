@@ -7,7 +7,16 @@ export class ClassNameManager {
       }
       return this.classMap.get(tagType)!;
     }
+    setClassName(tagType: string, className?: string): void {
+      if (className) {
+        this.classMap.set(tagType, className);
+      } else {
+        this.classMap.delete(tagType);
+      }
+    }
     replaceClassName(tagType: string, newClassName: string) {
       this.classMap.set(tagType, newClassName);
     }
   }
+
+  
