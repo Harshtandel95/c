@@ -6,6 +6,8 @@ import { Toast } from "primereact/toast";
 import { Alert, AlertDescription } from "../ui/alert";
 import { ClassNameManager } from "../BodyGeneration/ClassNameManager";
 
+const tagOptions = ['ul', 'li', 'a', 'div', 'h2'];
+
 interface HeadingNode {
   text: string;
   level: number;
@@ -66,9 +68,9 @@ const generateHTML: GenerateHTML = (nodes, classNameManager) => {
   if (!nodes || !Array.isArray(nodes)) return '';
   const renderList = (items: HeadingNode[]): string => {
     if (!items.length) return '';
-    const ulClass = classNameManager.getClassName('ul') || 'default-ul-class';
-    const liClass = classNameManager.getClassName('li') || 'default-li-class';
-    const aClass = classNameManager.getClassName('a') || 'default-a-class';
+    const ulClass = classNameManager.getClassName('ul') || '';
+    const liClass = classNameManager.getClassName('li') || '';
+    const aClass = classNameManager.getClassName('a') || '';
     return `
     <ul class="${ulClass}">${items.map(item => 
       `<li class="${liClass}"><a class="${aClass}" href="#${item.id}">${
@@ -78,38 +80,30 @@ const generateHTML: GenerateHTML = (nodes, classNameManager) => {
         ''}</li>`
     ).join('\n')}</ul>`;
   };
-
   let html = renderList(nodes)
     .replace(/\n<\/li>/g, '</li>')
     .replace(/^\s+/gm, '')
     .trim();
   html = html.replace(/● /g, '');
-
-  // Dynamically fetch tag and class names
-  const tocTag = classNameManager.getClassName('tocTag')?.trim() || 'div';
-  const tocClass = classNameManager.getClassName('div')?.trim() || 'default-div-class';
-  const headerTag = classNameManager.getClassName('headerTag')?.trim() || 'h2';
-  const headerClass = classNameManager.getClassName('h2')?.trim() || 'default-h2-class';
-
-  // Debugging: Log the fetched tag and class names
-  console.log('Custom Tag:', tocTag);
-  console.log('Custom Class:', tocClass);
-
-  // Ensure valid HTML tags are used
-  const validTags = ['div', 'section', 'article', 'header', 'footer', 'nav', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
-  const safeTocTag = validTags.includes(tocTag) ? tocTag : 'div';
-  const safeHeaderTag = validTags.includes(headerTag) ? headerTag : 'h2';
-
-  return (`<${safeTocTag} class="${tocClass}">
-  <${safeHeaderTag} class="${headerClass}"><strong>Table of Contents</strong></${safeHeaderTag}>
-${html}</${safeTocTag}>`);
+  const tocClass = classNameManager.getClassName('div') || '';
+  const headerClass = classNameManager.getClassName('h2') || '';
+  return (`<div class="${tocClass}">
+  <h2 class="${headerClass}"><strong>Table of Contents</strong></h2>
+${html}</div>`);
 };
 
 const TableOfContentsGenerator: React.FC = () => {
   const [text, setText] = useState<string>('');
+  const [tagClassMap, setTagClassMap] = useState<Record<string, string>>({});
+  const [selectedTag, setSelectedTag] = useState<string>(tagOptions[0]);
   const classNameManager = useRef<ClassNameManager>(new ClassNameManager());
   const toast = useRef<Toast>(null);
   const [showCopiedAlert, setShowCopiedAlert] = useState<boolean>(false);
+
+  const handleTagClassChange = (tag: string, className: string) => {
+    setTagClassMap((prev) => ({ ...prev, [tag]: className }));
+    classNameManager.current.setClassName(tag, className || undefined);
+  };
 
   const tocStructure = useMemo(() => parseHeadings(text), [text]);
   const htmlOutput = useMemo(() => {
@@ -141,23 +135,87 @@ const TableOfContentsGenerator: React.FC = () => {
   };
 
   return (
-    <div className="card">
+    <div className="card flex h-full">
       <Toast ref={toast} />
-      <div className="editor-container">
+      
+      {/* Editor Section */}
+      <div
+        className="editor-container flex-1 relative p-4 overflow-auto"
+        style={{ height: "300px", wordWrap: "break-word", whiteSpace: "pre-wrap" }}
+      >
         <Editor
           value={text}
           onTextChange={(e) => setText(e.textValue ?? '')}
-          style={{ height: '320px' }}
-          headerTemplate={<h1>Table Of Content:</h1>}
+          style={{ height: '100%', padding: '10px', boxSizing: 'border-box' }}
+          headerTemplate={<h1 className="text-lg font-semibold mb-2">Table Of Content:</h1>}
           placeholder="Enter each heading on a new line. Add a space after your heading text. Everything after the space will be ignored."
+          className="w-full h-full border rounded focus:outline-none focus:ring focus:border-blue-300"
         />
-      </div>
-      <pre className="html-output">
-        <div className="flex cursor-pointer flex-row-reverse justify-between">
-          <Copy onClick={handlecopy} />
-          <code>{htmlOutput}</code>
+        {/* Copy Icon for Editor */}
+        <div className="absolute top-2 right-2 cursor-pointer">
+          <Copy
+            onClick={handlecopy}
+            className="text-gray-500 hover:text-gray-700"
+            size={20}
+          />
         </div>
-      </pre>
+      </div>
+
+      {/* Tag Classes Section */}
+      <div className="tag-class-manager flex-1 p-4 max-h-[400px] overflow-auto">
+        <h3 className="text-lg font-semibold mb-4">Tag Classes</h3>
+        <div className="flex items-center space-x-2 mb-4">
+          <select
+            id="tag-selector"
+            value={selectedTag}
+            onChange={(e) => setSelectedTag(e.target.value)}
+            className="flex-1 p-2 border rounded focus:outline-none focus:ring focus:border-blue-300"
+          >
+            {tagOptions.map((tag) => (
+              <option key={tag} value={tag}>
+                {`<${tag}>`}
+              </option>
+            ))}
+          </select>
+          <input
+            id={`class-${selectedTag}`}
+            type="text"
+            value={tagClassMap[selectedTag] || ''}
+            onChange={(e) => handleTagClassChange(selectedTag, e.target.value)}
+            className="flex-1 p-2 border rounded focus:outline-none focus:ring focus:border-blue-300"
+            placeholder={`Class for <${selectedTag}>`}
+          />
+        </div>
+        <ul className="space-y-1">
+          {Object.entries(tagClassMap)
+            .filter(([_, className]) => className.trim() !== '') // Only show tags with assigned values
+            .map(([tag, className]) => (
+              <li
+                key={tag}
+                className="flex justify-between items-center p-1 border rounded bg-gray-50"
+              >
+                <span className="font-medium text-gray-700">{`<${tag}>`}</span>
+                <span className="text-sm text-gray-500">{className}</span>
+              </li>
+            ))}
+        </ul>
+      </div>
+
+      {/* Output Section */}
+      <div
+        className="html-output flex-1 relative border-r p-4 max-h-[400px] overflow-auto"
+        style={{ wordWrap: "break-word", whiteSpace: "pre-wrap" }}
+      >
+        <div className="absolute top-2 right-2 cursor-pointer">
+          <Copy
+            onClick={handlecopy}
+            className="text-gray-500 hover:text-gray-700"
+            size={20}
+          />
+        </div>
+        <code>{htmlOutput}</code>
+      </div>
+
       {showCopiedAlert && (
         <Alert className="fixed bottom-4 right-4 w-auto">
           <AlertDescription>
