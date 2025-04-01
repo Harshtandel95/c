@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Editor } from "primereact/editor";
 import './type.css';
 import { Copy } from "lucide-react";
@@ -94,15 +94,29 @@ ${html}</div>`);
 
 const TableOfContentsGenerator: React.FC = () => {
   const [text, setText] = useState<string>('');
-  const [tagClassMap, setTagClassMap] = useState<Record<string, string>>({});
+  const [tagClassMap, setTagClassMap] = useState<Record<string, string>>(() => {
+    // Load from localStorage on initial render
+    const savedTagClassMap = localStorage.getItem("tocTagClassMap");
+    return savedTagClassMap ? JSON.parse(savedTagClassMap) : {};
+  });
   const [selectedTag, setSelectedTag] = useState<string>(tagOptions[0]);
   const classNameManager = useRef<ClassNameManager>(new ClassNameManager());
   const toast = useRef<Toast>(null);
   const [showCopiedAlert, setShowCopiedAlert] = useState<boolean>(false);
 
+  // Save tagClassMap to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("tocTagClassMap", JSON.stringify(tagClassMap));
+  }, [tagClassMap]);
+
   const handleTagClassChange = (tag: string, className: string) => {
     setTagClassMap((prev) => ({ ...prev, [tag]: className }));
     classNameManager.current.setClassName(tag, className || undefined);
+  };
+
+  const handleResetTagClassMap = () => {
+    setTagClassMap({});
+    localStorage.removeItem("tocTagClassMap");
   };
 
   const tocStructure = useMemo(() => parseHeadings(text), [text]);
@@ -199,6 +213,12 @@ const TableOfContentsGenerator: React.FC = () => {
               </li>
             ))}
         </ul>
+        <button
+          onClick={handleResetTagClassMap}
+          className="p-2 bg-red-500 text-white rounded hover:bg-red-600 mt-4"
+        >
+          Reset Tag Classes
+        </button>
       </div>
 
       {/* Output Section */}
