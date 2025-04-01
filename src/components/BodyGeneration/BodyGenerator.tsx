@@ -7,9 +7,12 @@ const BodyGenerator = () => {
   const [text, setText] = useState<string>("");
   const [processedText, setProcessedText] = useState<string>("");
   const [showCopiedAlert, setShowCopiedAlert] = useState(false);
-  const [tagClassMap, setTagClassMap] = useState<Record<string, string>>({});
-  const [tagInput, setTagInput] = useState<string>(""); // Input for tag name
-  const [classInput, setClassInput] = useState<string>(""); // Input for class name
+  const [tagClassMap, setTagClassMap] = useState<Record<string, string>>(() => {
+    const savedTagClassMap = localStorage.getItem("tagClassMap");
+    return savedTagClassMap ? JSON.parse(savedTagClassMap) : {};
+  });
+  const [tagInput, setTagInput] = useState<string>("");
+  const [classInput, setClassInput] = useState<string>("");
 
   const toast = useRef<Toast>(null);
 
@@ -33,6 +36,12 @@ const BodyGenerator = () => {
     const elementsWithStyle = temp.querySelectorAll("[style]");
     elementsWithStyle.forEach(element => {
       element.removeAttribute("style");
+    });
+
+    // Remove the `data-list` attribute from all elements
+    const elementsWithDataList = temp.querySelectorAll("[data-list]");
+    elementsWithDataList.forEach(element => {
+      element.removeAttribute("data-list");
     });
 
     // Add spaces around href values in anchor tags
@@ -60,6 +69,30 @@ const BodyGenerator = () => {
       }
     });
 
+    // Replace <ol> tags with <ul> tags
+    const orderedLists = temp.querySelectorAll("ol");
+    orderedLists.forEach(ol => {
+      const ul = document.createElement("ul");
+      // Copy all child elements from <ol> to <ul>
+      while (ol.firstChild) {
+        ul.appendChild(ol.firstChild);
+      }
+      // Replace <ol> with <ul>
+      ol.parentNode?.replaceChild(ul, ol);
+    });
+
+    // Remove <data-list> and <span> tags
+    const unwantedTags = temp.querySelectorAll("data-list, span");
+    unwantedTags.forEach(tag => {
+      const parent = tag.parentNode;
+      if (parent) {
+        while (tag.firstChild) {
+          parent.insertBefore(tag.firstChild, tag);
+        }
+        parent.removeChild(tag);
+      }
+    });
+
     // Generate and assign IDs to headings
     const headings = temp.querySelectorAll("h1, h2, h3, h4, h5, h6");
     headings.forEach(heading => {
@@ -77,6 +110,9 @@ const BodyGenerator = () => {
 
     // Apply custom classes to tags
     Object.entries(tagClassMap).forEach(([tag, className]) => {
+      // Ensure no custom class is applied to <data-list> tags
+      if (tag === "data-list") return;
+
       const elements = temp.querySelectorAll(tag);
       elements.forEach(element => {
         element.className = className; // Assign the custom class
@@ -90,6 +126,10 @@ const BodyGenerator = () => {
     const { html } = processHTML(text);
     setProcessedText(html);
   }, [text, tagClassMap]);
+
+  useEffect(() => {
+    localStorage.setItem("tagClassMap", JSON.stringify(tagClassMap));
+  }, [tagClassMap]);
 
   const handleCopy = async () => {
     try {
@@ -109,8 +149,8 @@ const BodyGenerator = () => {
   const handleAddTagClass = () => {
     if (tagInput.trim() && classInput.trim()) {
       setTagClassMap((prev) => ({ ...prev, [tagInput.trim()]: classInput.trim() }));
-      setTagInput(""); // Clear the tag input
-      setClassInput(""); // Clear the class input
+      setTagInput("");
+      setClassInput("");
     }
   };
 
@@ -120,6 +160,11 @@ const BodyGenerator = () => {
       delete updatedMap[tag];
       return updatedMap;
     });
+  };
+
+  const handleResetTagClassMap = () => {
+    setTagClassMap({});
+    localStorage.removeItem("tagClassMap");
   };
 
   return (
@@ -175,6 +220,12 @@ const BodyGenerator = () => {
             </li>
           ))}
         </ul>
+        <button
+          onClick={handleResetTagClassMap}
+          className="p-2 bg-red-500 text-white rounded hover:bg-red-600 mt-4"
+        >
+          Reset Tag Classes
+        </button>
       </div>
 
       <HTMLPreview 
