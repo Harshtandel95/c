@@ -4,8 +4,14 @@ import { Toast } from "primereact/toast";
 import { HTMLPreview } from "./HTMLPreview";
 
 const BodyGenerator = () => {
-  const [text, setText] = useState<string>("");
-  const [processedText, setProcessedText] = useState<string>("");
+  const [text, setText] = useState<string>(() => {
+    // Load text from localStorage on initial render
+    return localStorage.getItem("bodyGeneratorText") || "";
+  });
+  const [processedText, setProcessedText] = useState<string>(() => {
+    // Load processedText from localStorage on initial render
+    return localStorage.getItem("bodyGeneratorProcessedText") || "";
+  });
   const [showCopiedAlert, setShowCopiedAlert] = useState(false);
   const [tagClassMap, setTagClassMap] = useState<Record<string, string>>(() => {
     const savedTagClassMap = localStorage.getItem("tagClassMap");
@@ -24,6 +30,12 @@ const BodyGenerator = () => {
       .replace(/[^a-zA-Z0-9\s-]/g, '') // Remove non-alphanumeric characters except hyphens
       .replace(/\s+/g, '-') // Replace spaces with hyphens
       .replace(/-+/g, '-'); // Remove consecutive hyphens
+  };
+
+  // Function to reset the input field
+  const handleResetInput = () => {
+    setText(""); // Clear the input field
+    localStorage.removeItem("bodyGeneratorText"); // Remove saved input from localStorage
   };
 
   // Function to process the HTML content, add spaces around href, and remove style attributes
@@ -122,11 +134,22 @@ const BodyGenerator = () => {
     return { html: temp.innerHTML };
   };
 
+  // Process the text whenever it or the tagClassMap changes
   useEffect(() => {
     const { html } = processHTML(text);
     setProcessedText(html);
   }, [text, tagClassMap]);
 
+  // Save text and processedText to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("bodyGeneratorText", text);
+  }, [text]);
+
+  useEffect(() => {
+    localStorage.setItem("bodyGeneratorProcessedText", processedText);
+  }, [processedText]);
+
+  // Save tagClassMap to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("tagClassMap", JSON.stringify(tagClassMap));
   }, [tagClassMap]);
@@ -169,12 +192,23 @@ const BodyGenerator = () => {
 
   return (
     <div className="space-y-4">
-      <Editor
-        value={text}
-        onTextChange={(e) => setText(e.htmlValue || "")}
-        style={{ height: "320px" }}
-        placeholder="Enter headings in format: 'Heading Text (H1)' or 'Heading Text (h2)'"
-      />
+      {/* Editor Section */}
+      <div className="relative">
+        <Editor
+          value={text}
+          onTextChange={(e) => setText(e.htmlValue || "")}
+          style={{ height: "320px" }}
+          placeholder="Enter headings in format: 'Heading Text (H1)' or 'Heading Text (h2)'"
+        />
+
+        {/* Reset Input Button */}
+        <button
+          onClick={handleResetInput}
+          className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded hover:bg-red-600"
+        >
+          Reset Input
+        </button>
+      </div>
 
       {/* Tag Classes Section */}
       <div className="tag-class-manager p-4 border rounded bg-gray-50">
@@ -222,12 +256,13 @@ const BodyGenerator = () => {
         </ul>
         <button
           onClick={handleResetTagClassMap}
-          className="p-2 bg-red-500 text-white rounded hover:bg-red-600 mt-4"
+          className="p-1 bg-red-500 text-white rounded hover:bg-red-600 mt-4"
         >
           Reset Tag Classes
         </button>
       </div>
 
+      {/* Output Section */}
       <HTMLPreview 
         processedText={processedText}
         onCopy={handleCopy}
