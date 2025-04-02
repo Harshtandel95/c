@@ -40,62 +40,101 @@ const parseHeadings: ParseHeadings = (text) => {
   lines.forEach((line, index) => {
     const trimmedLine = line.trim().replace(/^●\s*/, ''); // Remove bullet points
     if (!trimmedLine) return;
+
     const headingText = trimmedLine
       .replace(/\(h[1-6]\)/gi, '') // Remove (h1), (h2), etc.
       .replace(/^\d+\.\s*/, '') // Remove indexing digits like 1., 2., etc.
       .trim();
     if (!headingText) return;
+
     const baseId = generateAnchorId(headingText);
-    const id = root.some(node => node.id === baseId) 
-      ? `${baseId}-${index}`
+    const id = root.some(node => node.id === baseId)
+       ? `${baseId}-${index}`
       : baseId;
+
+    const levelMatch = trimmedLine.match(/\(h([1-6])\)/i);
+    const level = levelMatch ? parseInt(levelMatch[1], 10) : 2;
+
     const node: HeadingNode = {
       text: headingText,
-      level: 2,
+      level,
       id,
       children: []
     };
 
-    root.push(node);
-    levelMap[2] = node;
-    levelMap[3] = null;
-    levelMap[4] = null;
+    if (level === 2) {
+      // Top-level heading
+      root.push(node);
+      levelMap[2] = node;
+      levelMap[3] = null;
+      levelMap[4] = null;
+    } else if (level === 3) {
+      // Subheading under H2
+      const parent = levelMap[2];
+      if (parent) {
+        parent.children.push(node);
+        levelMap[3] = node;
+        levelMap[4] = null;
+      }
+    } else if (level === 4) {
+      // Subheading under H3
+      const parent = levelMap[3];
+      if (parent) {
+        parent.children.push(node);
+        levelMap[4] = node;
+      }
+    }
   });
+
   return root;
 };
 
 const generateHTML: GenerateHTML = (nodes, classNameManager) => {
   if (!nodes || !Array.isArray(nodes)) return '';
-  const renderList = (items: HeadingNode[]): string => {
+
+  const renderList = (items: HeadingNode[], level = 2): string => {
     if (!items.length) return '';
+
     const ulClass = classNameManager.getClassName('ul') || '';
     const liClass = classNameManager.getClassName('li') || '';
     const aClass = classNameManager.getClassName('a') || '';
+
     return `
-    <ul class="${ulClass}">${items.map(item => 
-      `<li class="${liClass}"><a class="${aClass}" href="#${item.id}">${
-        sanitizeText(item.text)
-      }</a>${item.children.length > 0 ? 
-        `\n<ul class="${ulClass}">${renderList(item.children)}</ul>` : 
-        ''}</li>`
-    ).join('\n')}</ul>`;
+    <ul class="${ulClass}">
+      ${items
+        .map((item) => {
+          const childList =
+            item.children.length > 0
+              ? renderList(item.children, level + 1)
+              : '';
+
+          return `
+          <li class="${liClass}">
+            <a class="${aClass}" href="#${item.id}">${sanitizeText(item.text)}</a>
+            ${childList}
+          </li>`;
+        })
+        .join('')}
+    </ul>`;
   };
-  let html = renderList(nodes)
-    .replace(/\n<\/li>/g, '</li>')
-    .replace(/^\s+/gm, '')
-    .trim();
-  html = html.replace(/● /g, '');
+
   const tocClass = classNameManager.getClassName('div') || '';
   const headerClass = classNameManager.getClassName('h2') || '';
-  return (`<div class="${tocClass}">
-  <h2 class="${headerClass}"><strong>Table of Contents</strong></h2>
-${html}</div>`);
+
+  return `
+    <div class="${tocClass}">
+      <h2 class="${headerClass}"><strong>Table of Contents</strong></h2>
+      ${renderList(nodes)}
+    </div>`;
 };
 
 const TableOfContentsGenerator: React.FC = () => {
-  const [text, setText] = useState<string>('');
+  const [text, setText] = useState<string>(() => {
+    // Load text from localStorage on initial render
+    return localStorage.getItem("tocText") || '';
+  });
   const [tagClassMap, setTagClassMap] = useState<Record<string, string>>(() => {
-    // Load from localStorage on initial render
+    //Load tagClassMap from localStorage on initial render
     const savedTagClassMap = localStorage.getItem("tocTagClassMap");
     return savedTagClassMap ? JSON.parse(savedTagClassMap) : {};
   });
@@ -104,10 +143,22 @@ const TableOfContentsGenerator: React.FC = () => {
   const toast = useRef<Toast>(null);
   const [showCopiedAlert, setShowCopiedAlert] = useState<boolean>(false);
 
+  // Update classNameManager with saved classes when the component mounts
+  useEffect(() => {
+    Object.entries(tagClassMap).forEach(([tag, className]) => {
+      classNameManager.current.setClassName(tag, className || undefined);
+    });
+  }, [tagClassMap]);
+
   // Save tagClassMap to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("tocTagClassMap", JSON.stringify(tagClassMap));
   }, [tagClassMap]);
+
+  // Save text to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("tocText", text);
+  }, [text]);
 
   const handleTagClassChange = (tag: string, className: string) => {
     setTagClassMap((prev) => ({ ...prev, [tag]: className }));
@@ -120,6 +171,7 @@ const TableOfContentsGenerator: React.FC = () => {
   };
 
   const tocStructure = useMemo(() => parseHeadings(text), [text]);
+
   const htmlOutput = useMemo(() => {
     try {
       return generateHTML(tocStructure, classNameManager.current);
@@ -127,7 +179,7 @@ const TableOfContentsGenerator: React.FC = () => {
       console.error('Error generating HTML:', error);
       return '';
     }
-  }, [tocStructure]);
+  }, [tocStructure, tagClassMap]);
 
   const handlecopy = async () => {
     try {
@@ -151,7 +203,7 @@ const TableOfContentsGenerator: React.FC = () => {
   return (
     <div className="card flex h-full">
       <Toast ref={toast} />
-      
+
       {/* Editor Section */}
       <div
         className="editor-container flex-1 relative p-4 overflow-auto"
@@ -235,7 +287,9 @@ const TableOfContentsGenerator: React.FC = () => {
         </div>
         <code>{htmlOutput}</code>
       </div>
+      
 
+            {/* copied alert */}
       {showCopiedAlert && (
         <Alert className="fixed bottom-4 right-4 w-auto">
           <AlertDescription>
