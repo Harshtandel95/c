@@ -134,7 +134,7 @@ const TableOfContentsGenerator: React.FC = () => {
     return localStorage.getItem("tocText") || '';
   });
   const [tagClassMap, setTagClassMap] = useState<Record<string, string>>(() => {
-    //Load tagClassMap from localStorage on initial render
+    // Load tagClassMap from localStorage on initial render
     const savedTagClassMap = localStorage.getItem("tocTagClassMap");
     return savedTagClassMap ? JSON.parse(savedTagClassMap) : {};
   });
@@ -160,14 +160,19 @@ const TableOfContentsGenerator: React.FC = () => {
     localStorage.setItem("tocText", text);
   }, [text]);
 
-  const handleTagClassChange = (tag: string, className: string) => {
-    setTagClassMap((prev) => ({ ...prev, [tag]: className }));
-    classNameManager.current.setClassName(tag, className || undefined);
+  const handleResetInput = () => {
+    setText(''); // Clear the input field
+    localStorage.removeItem("tocText"); // Remove saved input from localStorage
   };
 
   const handleResetTagClassMap = () => {
     setTagClassMap({});
     localStorage.removeItem("tocTagClassMap");
+  };
+
+  const handleTagClassChange = (tag: string, className: string) => {
+    setTagClassMap((prev) => ({ ...prev, [tag]: className }));
+    classNameManager.current.setClassName(tag, className || undefined);
   };
 
   const tocStructure = useMemo(() => parseHeadings(text), [text]);
@@ -179,7 +184,7 @@ const TableOfContentsGenerator: React.FC = () => {
       console.error('Error generating HTML:', error);
       return '';
     }
-  }, [tocStructure, tagClassMap]);
+  }, [tocStructure, tagClassMap]); // Ensure htmlOutput updates when tagClassMap changes
 
   const handlecopy = async () => {
     try {
@@ -201,35 +206,26 @@ const TableOfContentsGenerator: React.FC = () => {
   };
 
   return (
-    <div className="card flex h-full">
+    <div className="container mx-auto p-6 space-y-6">
       <Toast ref={toast} />
 
       {/* Editor Section */}
-      <div
-        className="editor-container flex-1 relative p-4 overflow-auto"
-        style={{ height: "300px", wordWrap: "break-word", whiteSpace: "pre-wrap" }}
-      >
-        <Editor
-          value={text}
-          onTextChange={(e) => setText(e.textValue ?? '')}
-          style={{ height: '100%', padding: '10px', boxSizing: 'border-box' }}
-          headerTemplate={<h1 className="text-lg font-semibold mb-2">Table Of Content:</h1>}
-          placeholder="Enter each heading on a new line. Add a space after your heading text. Everything after the space will be ignored."
-          className="w-full h-full border rounded focus:outline-none focus:ring focus:border-blue-300"
-        />
-        {/* Copy Icon for Editor */}
-        <div className="absolute top-2 right-2 cursor-pointer">
-          <Copy
-            onClick={handlecopy}
-            className="text-gray-500 hover:text-gray-700"
-            size={20}
+      <div className="p-4 border rounded bg-white shadow-md">
+        <h2 className="text-xl font-semibold mb-4">Editor</h2>
+        <div className="relative">
+          <Editor
+            value={text}
+            onTextChange={(e) => setText(e.textValue ?? '')}
+            style={{ height: '300px', padding: '10px', boxSizing: 'border-box' }}
+            placeholder="Enter each heading on a new line. Add a space after your heading text. Everything after the space will be ignored."
+            className="w-full border rounded focus:outline-none focus:ring focus:border-blue-300"
           />
         </div>
       </div>
 
       {/* Tag Classes Section */}
-      <div className="tag-class-manager flex-1 p-4 max-h-[400px] overflow-auto">
-        <h3 className="text-lg font-semibold mb-4">Tag Classes</h3>
+      <div className="p-4 border rounded bg-white shadow-md">
+        <h2 className="text-xl font-semibold mb-4">Tag Classes</h2>
         <div className="flex items-center space-x-2 mb-4">
           <select
             id="tag-selector"
@@ -252,44 +248,53 @@ const TableOfContentsGenerator: React.FC = () => {
             placeholder={`Class for <${selectedTag}>`}
           />
         </div>
-        <ul className="space-y-1">
+        <ul className="space-y-1 mb-4">
           {Object.entries(tagClassMap)
-            .filter(([_, className]) => className.trim() !== '') // Only show tags with assigned values
+            .filter(([_, className]) => className.trim() !== '')
             .map(([tag, className]) => (
               <li
                 key={tag}
-                className="flex justify-between items-center p-1 border rounded bg-gray-50"
+                className="flex justify-between items-center p-2 border rounded bg-gray-50"
               >
                 <span className="font-medium text-gray-700">{`<${tag}>`}</span>
                 <span className="text-sm text-gray-500">{className}</span>
               </li>
             ))}
         </ul>
-        <button
-          onClick={handleResetTagClassMap}
-          className="p-2 bg-red-500 text-white rounded hover:bg-red-600 mt-4"
-        >
-          Reset Tag Classes
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={handleResetTagClassMap}
+            className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Reset Tag Classes
+          </button>
+          <button
+            onClick={handleResetInput}
+            className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Reset Input
+          </button>
+        </div>
       </div>
 
       {/* Output Section */}
-      <div
-        className="html-output flex-1 relative border-r p-4 max-h-[400px] overflow-auto"
-        style={{ wordWrap: "break-word", whiteSpace: "pre-wrap" }}
-      >
-        <div className="absolute top-2 right-2 cursor-pointer">
-          <Copy
-            onClick={handlecopy}
-            className="text-gray-500 hover:text-gray-700"
-            size={20}
-          />
+      <div className="p-4 border rounded bg-white shadow-md">
+        <h2 className="text-xl font-semibold mb-4">HTML Output</h2>
+        <div className="relative">
+          <div className="absolute top-2 right-2 cursor-pointer">
+            <Copy
+              onClick={handlecopy}
+              className="text-gray-500 hover:text-gray-700"
+              size={20}
+            />
+          </div>
+          <pre className="p-4 bg-gray-100 border rounded overflow-auto">
+            <code>{htmlOutput}</code>
+          </pre>
         </div>
-        <code>{htmlOutput}</code>
       </div>
-      
 
-            {/* copied alert */}
+      {/* Copied Alert */}
       {showCopiedAlert && (
         <Alert className="fixed bottom-4 right-4 w-auto">
           <AlertDescription>
