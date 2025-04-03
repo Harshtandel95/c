@@ -10,6 +10,8 @@ import { TagSettingsButton } from "./components/TagsSettings/TagsSEttings";
 import BodyGenerator from "./components/BodyGeneration/BodyGenerator";
 import useCompanyStore from "./components/TagsSettings/useCompanyStore";
 import BlogGenerator from "./components/BlogGenerator/BlogGenerator";
+import ImgConverter from "./components/ImgConverter/ImgConverter";
+
 const App = () => {
   const [activeTab, setActiveTab] = useState("BodyGenerator");
   const { companies, activeCompanyId, setTabgenerator } = useCompanyStore();
@@ -42,7 +44,7 @@ const App = () => {
           }}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-2 gap-4 rounded-2xl bg-white/50 p-2 backdrop-blur-lg md:grid-cols-5">
+          <TabsList className="flex flex-wrap gap-4 rounded-2xl bg-white/50 p-2 backdrop-blur-lg">
             <TabsTrigger
               value="BodyGenerator"
               className="flex items-center gap-2 rounded-xl transition-all data-[state=active]:bg-indigo-500 data-[state=active]:text-white"
@@ -77,6 +79,19 @@ const App = () => {
             >
               <Edit className="h-4 w-4" />
               <span>Blog Generator</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="ImgConverter"
+              className="relative flex items-center gap-2 rounded-xl transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:via-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/50 data-[state=active]:animate-glow"
+            >
+              {/* Glowing particle effect */}
+              <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-green-400 via-blue-500 to-purple-500 opacity-0 transition-opacity duration-300 data-[state=active]:opacity-100 blur-lg"></span>
+              <span className="absolute -inset-1 animate-pulse rounded-xl bg-gradient-to-r from-green-400 via-blue-500 to-purple-500 opacity-50 blur-2xl"></span>
+              <span className="absolute inset-0 flex items-center justify-center">
+                <div className="h-2 w-2 rounded-full bg-white opacity-0 data-[state=active]:opacity-100 animate-ping"></div>
+              </span>
+              <Edit className="relative z-10 h-4 w-4" />
+              <span className="relative z-10">Img Converter</span>
             </TabsTrigger>
           </TabsList>
           <div className="relative">
@@ -135,7 +150,10 @@ const App = () => {
                   </div>
                 </TabsContent>
                 <TabsContent value="BlogGenerator" className="mt-0">
-                <BlogGenerator />
+                  <BlogGenerator />
+                </TabsContent>
+                <TabsContent value="ImgConverter" className="mt-0">
+                  <ImgConverter />
                 </TabsContent>
               </CardContent>
             </Card>
