@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 
 const ReferenceGenerator = () => {
