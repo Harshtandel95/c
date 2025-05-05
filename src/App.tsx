@@ -11,6 +11,7 @@ import BodyGenerator from "./components/BodyGeneration/BodyGenerator";
 import useCompanyStore from "./components/TagsSettings/useCompanyStore";
 import BlogGenerator from "./components/BlogGenerator/BlogGenerator";
 import ImgConverter from "./components/ImgConverter/ImgConverter";
+import ReferenceGenerator from "./components/ReferenceGenerator/ReferenceGenerator";
 
 const App = () => {
   const [activeTab, setActiveTab] = useState("BodyGenerator");
@@ -93,6 +94,13 @@ const App = () => {
               <Edit className="relative z-10 h-4 w-4" />
               <span className="relative z-10">Img Converter</span>
             </TabsTrigger>
+            <TabsTrigger
+              value="ReferenceGenerator"
+              className="flex items-center gap-2 rounded-xl transition-all data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+            >
+              <Edit className="h-4 w-4" />
+              <span>Reference Generator</span>
+            </TabsTrigger>
           </TabsList>
           <div className="relative">
             <Card className="overflow-hidden border-none bg-white/70 backdrop-blur-lg">
@@ -155,6 +163,11 @@ const App = () => {
                 <TabsContent value="ImgConverter" className="mt-0">
                   <ImgConverter />
                 </TabsContent>
+
+                <TabsContent value="ReferenceGenerator" className="mt-0">
+                  <ReferenceGenerator />
+                </TabsContent>
+
               </CardContent>
             </Card>
             <div className="absolute -top-2 -left-2 h-4 w-4 rounded-full bg-indigo-500"></div>
