@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
+import { Copy, FileCode } from "lucide-react"; // Importing Copy and FileCode icons from lucide-react
 
 const ReferenceGenerator = () => {
   const [inputText, setInputText] = useState("");
@@ -53,8 +53,7 @@ const ReferenceGenerator = () => {
           Reference Generator
         </h1>
         <p className="text-gray-600 mt-2 text-lg">
-          Paste your references below.
-          
+          Paste your references below to generate a professional HTML structure.
         </p>
       </div>
 
@@ -66,8 +65,9 @@ const ReferenceGenerator = () => {
             <h3 className="text-xl font-semibold text-gray-800">Input</h3>
             <button
               onClick={handleGenerate}
-              className="px-4 py-2 bg-indigo-500 text-white text-sm font-medium rounded-lg shadow hover:bg-indigo-600 transition-all duration-300"
+              className="px-4 py-2 bg-indigo-500 text-white text-sm font-medium rounded-lg shadow hover:bg-indigo-600 transition-all duration-300 flex items-center gap-2"
             >
+              <FileCode className="h-5 w-5" />
               Generate HTML
             </button>
           </div>
@@ -89,7 +89,7 @@ const ReferenceGenerator = () => {
               onClick={handleCopy}
               className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg shadow hover:bg-green-600 transition-all duration-300 flex items-center gap-2"
             >
-              <ClipboardDocumentIcon className="h-5 w-5" />
+              <Copy className="h-5 w-5" />
               Copy
             </button>
           </div>
