@@ -26,7 +26,7 @@ const ReferenceGenerator = () => {
 <div class="article-faq-wrapper">
   <div id="inner-accordion_block" class="inner-accordion">
     <div class="inner-accordion-item" itemscope="" itemprop="mainEntity" itemtype="https://schema.org/Question">
-      <div class="inner-accordion-title" itemprop="name"><h2 id="faqs">References</h2></div>
+      <div class="inner-accordion-title" itemprop="name"><h2 id="faqs">Citations: </h2></div>
       <div class="inner-accordion-content" itemscope="" itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
         ${references
           .map((ref) => `<p itemprop="text">${ref}</p>`)
